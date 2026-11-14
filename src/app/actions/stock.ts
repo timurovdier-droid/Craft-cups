@@ -37,8 +37,12 @@ export async function upsertProduct(formData: FormData) {
       });
 
   if (photo.bytes && photo.ext) {
-    const imagePath = await writeProductPhoto(saved.id, photo.bytes, photo.ext);
-    await prisma.product.update({ where: { id: saved.id }, data: { imagePath } });
+    try {
+      const imagePath = await writeProductPhoto(saved.id, photo.bytes, photo.ext);
+      await prisma.product.update({ where: { id: saved.id }, data: { imagePath } });
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Не удалось сохранить фото" };
+    }
   }
 
   revalidatePath("/stock");
@@ -71,8 +75,12 @@ export async function setProductPhoto(formData: FormData) {
   if ("error" in photo && photo.error) return { error: photo.error };
   if (!photo.bytes || !photo.ext) return { error: "Выберите фото" };
 
-  const imagePath = await writeProductPhoto(id, photo.bytes, photo.ext);
-  await prisma.product.update({ where: { id }, data: { imagePath } });
+  try {
+    const imagePath = await writeProductPhoto(id, photo.bytes, photo.ext);
+    await prisma.product.update({ where: { id }, data: { imagePath } });
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Не удалось сохранить фото" };
+  }
   revalidatePath("/stock");
   revalidatePath("/sales");
 }

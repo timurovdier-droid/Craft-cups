@@ -1,3 +1,4 @@
+import { del, put } from "@vercel/blob";
 import { mkdir, readdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -36,8 +37,27 @@ export function looksLikeImage(bytes: Buffer, ext: string) {
   return false;
 }
 
+function blobEnabled() {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+}
+
 export async function writeProductPhoto(productId: string, bytes: Buffer, ext: string) {
   if (!/^[a-z0-9]+$/i.test(productId)) throw new Error("Некорректный товар");
+  const filename = `${productId}-${Date.now()}.${ext}`;
+
+  if (blobEnabled()) {
+    const blob = await put(`product-photos/${filename}`, bytes, {
+      access: "public",
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+      addRandomSuffix: false,
+    });
+    return blob.url;
+  }
+
+  if (process.env.VERCEL) {
+    throw new Error("На Vercel подключите хранилище Blob, иначе фото не сохранятся");
+  }
+
   const dir = photoDir();
   await mkdir(dir, { recursive: true });
   const existing = await readdir(dir).catch(() => [] as string[]);
@@ -46,13 +66,16 @@ export async function writeProductPhoto(productId: string, bytes: Buffer, ext: s
       .filter((name) => name.startsWith(`${productId}.`) || name.startsWith(`${productId}-`))
       .map((name) => unlink(path.join(dir, name)).catch(() => undefined)),
   );
-  const filename = `${productId}-${Date.now()}.${ext}`;
   await writeFile(path.join(dir, filename), bytes);
   return `/product-photos/${filename}`;
 }
 
 export async function deleteProductPhoto(imagePath: string | null) {
   if (!imagePath) return;
+  if (imagePath.startsWith("http")) {
+    if (blobEnabled()) await del(imagePath, { token: process.env.BLOB_READ_WRITE_TOKEN }).catch(() => undefined);
+    return;
+  }
   const filename = path.basename(imagePath.split("?")[0] ?? "");
   if (!filename || filename !== path.basename(filename)) return;
   await unlink(path.join(photoDir(), filename)).catch(() => undefined);

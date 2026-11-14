@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-
-const prisma = new PrismaClient();
+import { prisma } from "../src/lib/prisma";
 
 async function upsertUser(name: string, login: string, password: string) {
   const passwordHash = await bcrypt.hash(password, 10);
@@ -13,7 +11,9 @@ async function upsertUser(name: string, login: string, password: string) {
 }
 
 async function main() {
-  await prisma.$queryRawUnsafe("PRAGMA journal_mode=WAL;");
+  if (!process.env.TURSO_DATABASE_URL) {
+    await prisma.$queryRawUnsafe("PRAGMA journal_mode=WAL;");
+  }
   await upsertUser(
     process.env.USER1_NAME ?? "Дониёр",
     (process.env.USER1_LOGIN ?? "doniyor").toLowerCase(),
