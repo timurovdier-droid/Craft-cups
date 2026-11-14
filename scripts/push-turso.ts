@@ -1,4 +1,4 @@
-import { createClient } from "@libsql/client";
+import { createClient } from "@libsql/client/web";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import "../src/lib/load-env";
@@ -20,7 +20,7 @@ const client = createClient({ url, authToken });
 
 async function main() {
   await client.batch(
-    statements.map((statement) => ({ sql: statement })),
+    statements.map((statement) => ({ sql: statement, args: [] as string[] })),
     "write",
   );
   console.log("Схема Turso готова");

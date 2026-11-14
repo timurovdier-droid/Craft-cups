@@ -1,4 +1,4 @@
-import { createClient } from "@libsql/client";
+import { createClient } from "@libsql/client/web";
 import bcrypt from "bcryptjs";
 import { prisma, tursoConfig } from "@/lib/prisma";
 import { INIT_SQL } from "@/lib/schema-sql";
@@ -15,7 +15,7 @@ export async function ensureDatabase() {
       const statements = INIT_SQL.split(";")
         .map((part) => part.trim())
         .filter(Boolean)
-        .map((sql) => ({ sql }));
+        .map((sql) => ({ sql, args: [] as string[] }));
       await client.batch(statements, "write");
     }
   } else if (process.env.VERCEL) {
