@@ -1,10 +1,27 @@
+import { createClient } from "@libsql/client";
 import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
+import { prisma, tursoConfig } from "@/lib/prisma";
+import { INIT_SQL } from "@/lib/schema-sql";
 
 let ready = false;
 
-export async function ensureDefaultUsers() {
+export async function ensureDatabase() {
   if (ready) return;
+  const turso = tursoConfig();
+  if (turso) {
+    const client = createClient(turso);
+    const existing = await client.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='User'");
+    if (existing.rows.length === 0) {
+      const statements = INIT_SQL.split(";")
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .map((sql) => ({ sql }));
+      await client.batch(statements, "write");
+    }
+  } else if (process.env.VERCEL) {
+    throw new Error("На Vercel задайте TURSO_DATABASE_URL и TURSO_AUTH_TOKEN");
+  }
+
   const count = await prisma.user.count();
   if (count === 0) {
     const users = [
@@ -36,3 +53,5 @@ export async function ensureDefaultUsers() {
   }
   ready = true;
 }
+
+export const ensureDefaultUsers = ensureDatabase;

@@ -1,5 +1,6 @@
 import { createClient } from "@libsql/client";
-import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 
 const url = process.env.TURSO_DATABASE_URL?.trim();
 const authToken = process.env.TURSO_AUTH_TOKEN?.trim();
@@ -8,34 +9,20 @@ if (!url || !authToken) {
   process.exit(1);
 }
 
-const sql = execFileSync(
-  process.platform === "win32" ? "npx.cmd" : "npx",
-  ["prisma", "migrate", "diff", "--from-empty", "--to-schema-datamodel", "prisma/schema.prisma", "--script"],
-  { encoding: "utf8" },
-);
-
+const sql = readFileSync(path.join(process.cwd(), "prisma", "init.sql"), "utf8");
 const statements = sql
   .split(";")
   .map((part) => part.trim())
-  .filter((part) => part && !part.startsWith("--"));
+  .filter(Boolean);
 
 const client = createClient({ url, authToken });
 
 async function main() {
-  for (const statement of statements) {
-    try {
-      await client.execute(statement);
-      console.log("ok:", statement.slice(0, 72).replace(/\s+/g, " "));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (/already exists/i.test(message)) {
-        console.log("skip:", statement.slice(0, 72).replace(/\s+/g, " "));
-        continue;
-      }
-      throw error;
-    }
-  }
-  console.log("Схема Turso обновлена");
+  await client.batch(
+    statements.map((statement) => ({ sql: statement })),
+    "write",
+  );
+  console.log("Схема Turso готова");
 }
 
 main().catch((error) => {

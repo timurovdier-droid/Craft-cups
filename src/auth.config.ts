@@ -2,7 +2,7 @@ import type { NextAuthConfig } from "next-auth";
 
 export const authConfig = {
   trustHost: true,
-  secret: process.env.AUTH_SECRET,
+  secret: process.env.AUTH_SECRET || process.env.TURSO_AUTH_TOKEN || "craft-cups-dev-secret-change-me-please-32b",
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers: [],
