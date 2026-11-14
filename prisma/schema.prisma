@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String      @id @default(cuid())
+  name         String
+  login        String      @unique
+  passwordHash String
+  createdAt    DateTime    @default(now())
+  stockMoves   StockMove[]
+  sales        Sale[]
+  shipments    Shipment[]
+  payments     Payment[]
+  cashEntries  CashEntry[]
+}
+
+model Product {
+  id            String      @id @default(cuid())
+  name          String
+  category      String
+  unit          String
+  purchasePrice Int
+  imagePath     String?
+  createdAt     DateTime    @default(now())
+  stockMoves    StockMove[]
+  saleLines     SaleLine[]
+}
+
+model StockMove {
+  id        String        @id @default(cuid())
+  productId String
+  product   Product       @relation(fields: [productId], references: [id])
+  type      StockMoveType
+  qty       Int
+  unitCost  Int
+  saleId    String?
+  sale      Sale?         @relation(fields: [saleId], references: [id])
+  note      String?
+  createdById String
+  createdBy   User        @relation(fields: [createdById], references: [id])
+  createdAt DateTime      @default(now())
+}
+
+enum StockMoveType {
+  IN
+  OUT
+}
+
+model Client {
+  id        String    @id @default(cuid())
+  name      String
+  phone     String    @default("")
+  notes     String    @default("")
+  createdAt DateTime  @default(now())
+  sales     Sale[]
+  payments  Payment[]
+}
+
+model Sale {
+  id          String     @id @default(cuid())
+  clientId    String
+  client      Client     @relation(fields: [clientId], references: [id])
+  status      SaleStatus @default(open)
+  createdById String
+  createdBy   User       @relation(fields: [createdById], references: [id])
+  createdAt   DateTime   @default(now())
+  lines       SaleLine[]
+  shipments   Shipment[]
+  payments    Payment[]
+  stockMoves  StockMove[]
+}
+
+enum SaleStatus {
+  open
+  partial
+  done
+}
+
+model SaleLine {
+  id                String          @id @default(cuid())
+  saleId            String
+  sale              Sale            @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId         String
+  product           Product         @relation(fields: [productId], references: [id])
+  qtyOrdered        Int
+  unitSalePrice     Int
+  unitPurchasePrice Int
+  shipmentLines     ShipmentLine[]
+}
+
+model Shipment {
+  id          String         @id @default(cuid())
+  saleId      String
+  sale        Sale           @relation(fields: [saleId], references: [id])
+  createdById String
+  createdBy   User           @relation(fields: [createdById], references: [id])
+  createdAt   DateTime       @default(now())
+  lines       ShipmentLine[]
+}
+
+model ShipmentLine {
+  id          String   @id @default(cuid())
+  shipmentId  String
+  shipment    Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  saleLineId  String
+  saleLine    SaleLine @relation(fields: [saleLineId], references: [id])
+  qty         Int
+}
+
+model Payment {
+  id          String     @id @default(cuid())
+  clientId    String
+  client      Client     @relation(fields: [clientId], references: [id])
+  saleId      String?
+  sale        Sale?      @relation(fields: [saleId], references: [id])
+  amount      Int
+  paidAt      DateTime   @default(now())
+  archivedAt  DateTime?
+  createdById String
+  createdBy   User       @relation(fields: [createdById], references: [id])
+  cashEntry   CashEntry?
+}
+
+model CashEntry {
+  id          String        @id @default(cuid())
+  date        DateTime      @default(now())
+  amount      Int
+  direction   CashDirection
+  category    String
+  note        String        @default("")
+  paymentId   String?       @unique
+  payment     Payment?      @relation(fields: [paymentId], references: [id])
+  archivedAt  DateTime?
+  createdById String
+  createdBy   User          @relation(fields: [createdById], references: [id])
+}
+
+enum CashDirection {
+  IN
+  OUT
+}
+
