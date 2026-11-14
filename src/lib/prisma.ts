@@ -20,10 +20,10 @@ function createPrisma() {
   if (turso) {
     return new PrismaClient({ adapter: new PrismaLibSQL(turso), log });
   }
-  if (process.env.VERCEL) {
-    throw new Error("На Vercel задайте TURSO_DATABASE_URL и TURSO_AUTH_TOKEN");
-  }
-  return new PrismaClient({ log });
+  return new PrismaClient({
+    log,
+    datasources: { db: { url: process.env.DATABASE_URL || "file:./dev.db" } },
+  });
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrisma();
