@@ -5,12 +5,13 @@ import { PrismaClient } from "@prisma/client";
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 export function tursoConfig() {
-  const raw = process.env.TURSO_DATABASE_URL?.trim() || process.env.DATABASE_URL?.trim() || "";
-  if (!raw.startsWith("libsql://") && !raw.startsWith("https://")) return null;
-  return {
-    url: raw,
-    authToken: process.env.TURSO_AUTH_TOKEN,
-  };
+  const raw = process.env.TURSO_DATABASE_URL?.trim() || "";
+  if (!raw) return null;
+  const url = raw.startsWith("libsql://") ? `https://${raw.slice("libsql://".length)}` : raw;
+  if (!url.startsWith("https://")) return null;
+  const authToken = process.env.TURSO_AUTH_TOKEN?.trim();
+  if (!authToken) return null;
+  return { url, authToken };
 }
 
 function createPrisma() {
