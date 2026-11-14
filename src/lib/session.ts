@@ -1,10 +1,9 @@
 import { auth } from "@/auth";
-import { ensureDatabase } from "@/lib/bootstrap";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
-export async function requireUser() {
-  await ensureDatabase();
+export const requireUser = cache(async () => {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   return { id: session.user.id, name: session.user.name ?? "" };
-}
+});

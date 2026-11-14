@@ -3,10 +3,17 @@ import bcrypt from "bcryptjs";
 import { prisma, tursoConfig } from "@/lib/prisma";
 import { INIT_SQL } from "@/lib/schema-sql";
 
-let ready = false;
+let pending: Promise<void> | null = null;
 
-export async function ensureDatabase() {
-  if (ready) return;
+export function ensureDatabase() {
+  pending ??= setupDatabase().catch((error) => {
+    pending = null;
+    throw error;
+  });
+  return pending;
+}
+
+async function setupDatabase() {
   const turso = tursoConfig();
   if (turso) {
     const client = createClient(turso);
@@ -51,7 +58,6 @@ export async function ensureDatabase() {
       });
     }
   }
-  ready = true;
 }
 
 export const ensureDefaultUsers = ensureDatabase;
