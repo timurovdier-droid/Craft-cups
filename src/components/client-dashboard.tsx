@@ -39,7 +39,7 @@ export function ClientDashboard({
         <Kpi label="К оплате" value={<Money value={analytics.orderDebt} />} danger={analytics.orderDebt > 0} />
       </div>
 
-      <motionRow>
+      <MotionRow>
         <div className="panel p-4">
           <p className="text-sm text-[var(--ink-soft)]">Оплачено клиентом</p>
           <p className="mt-1 text-xl font-semibold num">
@@ -60,9 +60,9 @@ export function ClientDashboard({
           <p className="text-sm text-[var(--ink-soft)]">Активных заказов</p>
           <p className="mt-1 text-xl font-semibold num text-[var(--terracotta-dark)]">{analytics.activeOrders}</p>
         </div>
-      </motionRow>
+      </MotionRow>
 
-      <motionCharts topProducts={topProducts} topProfit={topProfit} analytics={analytics} clientName={clientName} />
+      <MotionCharts topProducts={topProducts} topProfit={topProfit} analytics={analytics} clientName={clientName} />
 
       <section className="panel p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -96,13 +96,13 @@ export function ClientDashboard({
 
       <section className="panel overflow-hidden">
         <h2 className="border-b border-[var(--line)] px-4 py-3 section-title">История заказов</h2>
-        <motionTable sales={analytics.sales} />
+        <MotionTable sales={analytics.sales} />
       </section>
     </div>
   );
 }
 
-function motionRow({ children }: { children: React.ReactNode }) {
+function MotionRow({ children }: { children: React.ReactNode }) {
   return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{children}</div>;
 }
 
@@ -126,7 +126,7 @@ function Kpi({
   );
 }
 
-function motionCharts({
+function MotionCharts({
   topProducts,
   topProfit,
   analytics,
@@ -213,7 +213,7 @@ function ChartCard({
   );
 }
 
-function motionTable({ sales }: { sales: ClientAnalytics["sales"] }) {
+function MotionTable({ sales }: { sales: ClientAnalytics["sales"] }) {
   return (
     <table>
       <thead>
