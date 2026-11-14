@@ -1,3 +1,4 @@
+import "../src/lib/load-env";
 import bcrypt from "bcryptjs";
 import { prisma } from "../src/lib/prisma";
 

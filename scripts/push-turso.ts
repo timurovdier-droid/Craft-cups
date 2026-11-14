@@ -1,6 +1,7 @@
 import { createClient } from "@libsql/client";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import "../src/lib/load-env";
 
 const url = process.env.TURSO_DATABASE_URL?.trim();
 const authToken = process.env.TURSO_AUTH_TOKEN?.trim();
